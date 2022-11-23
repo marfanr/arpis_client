@@ -20,6 +20,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(arpis_network REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED  
   "src/${PROJECT_NAME}/joint/joint.cpp"
@@ -31,6 +33,8 @@ ament_target_dependencies(${PROJECT_NAME}
   "rclcpp"
   "tf2_ros"
   "arpis_network"
+  "geometry_msgs"
+  "sensor_msgs"
 )
 
 add_executable(arpis_main src/arpis_main.cpp)
@@ -40,6 +44,7 @@ target_include_directories(arpis_main PUBLIC
 target_link_libraries(arpis_main ${PROJECT_NAME})
 
 install(TARGETS ${PROJECT_NAME}  
+  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION "lib"
   LIBRARY DESTINATION "lib"
   RUNTIME DESTINATION "bin")
