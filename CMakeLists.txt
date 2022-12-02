@@ -22,12 +22,16 @@ find_package(tf2_ros REQUIRED)
 find_package(arpis_network REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(tachimawari_interfaces REQUIRED)
+find_package(tachimawari REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED  
   "src/${PROJECT_NAME}/joint/joint.cpp"
 )
 
 install(DIRECTORY "include" DESTINATION ".")
+install(DIRECTORY "launch" DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY "urdf" DESTINATION share/${PROJECT_NAME}/)
 
 ament_target_dependencies(${PROJECT_NAME}  
   "rclcpp"
@@ -35,6 +39,8 @@ ament_target_dependencies(${PROJECT_NAME}
   "arpis_network"
   "geometry_msgs"
   "sensor_msgs"
+  "tachimawari_interfaces"
+  "tachimawari"
 )
 
 add_executable(arpis_main src/arpis_main.cpp)
