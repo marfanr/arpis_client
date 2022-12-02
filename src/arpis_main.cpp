@@ -22,26 +22,26 @@
 using namespace std::chrono_literals;
 
 const std::string joint_id[20] = {
-  "right_shoulder_pitch",
-  "left_shoulder_pitch",
-  "right_shoulder_roll",
-  "left_shoulder_roll",
-  "right_elbow",
-  "left_elbow",
-  "right_hip_yaw",
-  "left_hip_yaw",
-  "right_hip_roll",
-  "left_hip_roll",
-  "right_hip_pitch",
-  "left_hip_pitch",
-  "right_knee",
-  "left_knee",
-  "right_ankle_pitch",
-  "left_ankle_pitch",
-  "right_ankle_roll",
-  "left_ankle_roll",
-  "head_pan",
-  "head_tilt"
+  "right_shoulder_pitch", // 1
+  "left_shoulder_pitch", // 2
+  "right_shoulder_roll", // 3
+  "left_shoulder_roll", // 4
+  "right_elbow", // 5
+  "left_elbow", // 6
+  "right_hip_yaw", // 7
+  "left_hip_yaw", // 8
+  "right_hip_pitch", // 9
+  "left_hip_pitch", // 10
+  "right_hip_roll", // 11
+  "left_hip_roll", // 12
+  "right_knee", // 13
+  "left_knee", // 14
+  "right_ankle_roll", // 15
+  "left_ankle_roll", // 16
+  "right_ankle_pitch", // 17
+  "left_ankle_pitch", // 18
+  "head_pan", // 19
+  "head_tilt" // 20
   };
 
 struct arpis_transfer_item {
@@ -55,32 +55,31 @@ struct arpis {
 
 // typedef arpis_item arp[22];
 
-class ArpisClientNode : public rclcpp::Node {
+class ArpisClientNode {
   public:
-  ArpisClientNode(const char *addr, int port): Node("client") {
+  ArpisClientNode(const char * addr, int port, rclcpp::Node::SharedPtr node, rclcpp::Node::SharedPtr node2)
+    : node_(node), node2_(node2) {
     tcp = new arpis_network::tcp(addr, port);
-    
     tcp->connect();
-    auto grp = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    rclcpp::SubscriptionOptions options;
-    options.callback_group = grp;
-    tf_broadcast_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
-    tcp_receiver_pub = this->create_publisher<tachimawari_interfaces::msg::Joint>("tcp_receiver", 10);
-    timer_ = this->create_wall_timer(1ms, std::bind(&ArpisClientNode::exec, this));
-    tcp_receiver_sub = this->create_subscription<tachimawari_interfaces::msg::Joint>("tcp_receiver", 10, std::bind(&ArpisClientNode::rviz, this, std::placeholders::_1), options);
-    joint_broadcast_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+
+    // auto grp = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    // rclcpp::SubscriptionOptions options;
+    // options.callback_group = grp;
+    tf_broadcast_ = std::make_unique<tf2_ros::TransformBroadcaster>(node2_);
+    tcp_receiver_pub = node_->create_publisher<tachimawari_interfaces::msg::Joint>("tcp_receiver", 10);
+    timer_ = node_->create_wall_timer(1ms, std::bind(&ArpisClientNode::exec, this));
+    tcp_receiver_sub = node2_->create_subscription<tachimawari_interfaces::msg::Joint>("tcp_receiver", 10, std::bind(&ArpisClientNode::rviz, this, std::placeholders::_1));
+    joint_broadcast_ = node2_->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
   }
   private:  
   double val2deg(int val) {
-    return (val-2048)*180.0/2048;
+    // return (val-2048)*180.0/2048 ;
+    return (val-2048)*(M_PI/180.0);
   }
-  void register_joint(std::string name, double pos) {
-      sensor_msgs::msg::JointState js;
-      js.header.stamp = this->get_clock()->now();
+  void register_joint(sensor_msgs::msg::JointState &js,std::string name, double pos) {
       js.header.frame_id = "world";     
       js.name.push_back(name);
       js.position.push_back(pos);
-      joint_broadcast_->publish(js);
   }
   // void rviz_coder(const tachimawari_interfaces::msg::Joint::SharedPtr msg) {
   // }
@@ -89,58 +88,41 @@ class ArpisClientNode : public rclcpp::Node {
     
     t.header.set__frame_id("world");
     t.set__child_frame_id("robot"); 
-    t.header.stamp = this->get_clock()->now();   
+    t.header.stamp = node_->get_clock()->now();   
     t.transform.translation.x = 0.5;
     t.transform.translation.y = 0;
     t.transform.translation.z = 0;
     tf_broadcast_->sendTransform(t);         
 
-    // init joint     
-    this->register_joint("body_to_robot", (3.14/180)*0);
-    this->register_joint("right_shoulder_pitch", (3.14/180)*0);
-    this->register_joint("left_shoulder_pitch", (3.14/180)*0);
-    this->register_joint("left_hip_yaw", (3.14/180)*0);// switch (msg->id)
-    this->register_joint("left_hip_roll", (3.14/180)*0);
-    this->register_joint("left_hip_pitch", (3.14/180)*0);
-    this->register_joint("left_knee", (3.14/180)*0);
-    this->register_joint("left_ankle_pitch", (3.14/180)*0);
-    this->register_joint("left_ankle_roll", (3.14/180)*0);        
-    this->register_joint("right_hip_yaw", (3.14/180)*0);
-    this->register_joint("right_hip_roll", (3.14/180)*0);
-    this->register_joint("right_hip_pitch", (3.14/180)*0);
-    this->register_joint("right_knee", (3.14/180)*0);
-    this->register_joint("right_ankle_pitch", (3.14/180)*0);
-    this->register_joint("right_ankle_roll", (3.14/180)*0);    
-    this->register_joint("left_shoulder_roll", (3.14/180)*0);
-    this->register_joint("left_elbow", (3.14/180)*0);
-    this->register_joint("right_shoulder_roll", (3.14/180)*0);
-    this->register_joint("right_elbow", (3.14/180)*0);
-    this->register_joint("head_pan", (3.14/180)*0);
-    this->register_joint("head_tilt", (3.14/180)*0);
-        
-    // resend joind data with data from server
-    this->register_joint(joint_id[msg->id-1], val2deg(msg->position));
+    // init joint
+    this->register_joint(js, "body_to_robot", (3.14/180)*0);
     
-    RCLCPP_INFO(rclcpp::get_logger("arpis_client"), " id %i : position %f", msg->id, msg->position);
+
+    joint_broadcast_->publish(js);
+    js.position.clear();
+    js.name.clear();
+    // RCLCPP_INFO(rclcpp::get_logger("arpis_client"), " id %i : position %f", msg->id, msg->position);
   }
 
   void exec() {  
     char buffer[1024] = {0};
+    // RCLCPP_INFO(rclcpp::get_logger("test"), "s");
     tcp->receive(buffer, 1024);
     // if (std::string(buffer).length() != 0)
     char * buff = (char *)buffer;
     // arp * i = (arp *)(void *)buff;
     // arp k = (arp k)&i;
     arpis * items = (arpis *)(void *)buff;
-    // RCLCPP_INFO(rclcpp::get_logger("test"), joints.)
         
+    tachimawari_interfaces::msg::Joint joint;
     for (int i = 0; i < 20; i++) {
       RCLCPP_INFO(rclcpp::get_logger("arpis_client"), "id %i : position %i", (*items).i[i].id, (*items).i[i].position);
-      tachimawari_interfaces::msg::Joint joint;
       joint.id = (*items).i[i].id;
       joint.position = (*items).i[i].position;
-      this->tcp_receiver_pub->publish(joint);
+      register_joint(js, joint_id[joint.id-1], val2deg(joint.position));
     }        
+      js.header.stamp = node_->get_clock()->now();
+      this->tcp_receiver_pub->publish(joint);
   }  
   float tinc;
   rclcpp::Publisher<tachimawari_interfaces::msg::Joint>::SharedPtr tcp_receiver_pub;
@@ -149,6 +131,10 @@ class ArpisClientNode : public rclcpp::Node {
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcast_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_broadcast_;
   arpis_network::tcp * tcp;
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::Node::SharedPtr node2_;
+  sensor_msgs::msg::JointState js;
+
   double position[19];
 };
 
@@ -163,8 +149,22 @@ int main(int argc, char ** argv)
     else if (argv[t] == (std::string)"--port")
       port = (int)atoi(argv[t+1]);
   }
-  // auto node = std::make_shared<rclcpp::Node>()
-  rclcpp::spin(std::make_shared<ArpisClientNode>(addr, port));
+  auto node = std::make_shared<rclcpp::Node>("arpis_client_1");
+  auto node2 = std::make_shared<rclcpp::Node>("arpis_client_2");
+
+  // rclcpp::spin(std::make_shared<ArpisClientNode>(addr, port));
+  rclcpp::executors::MultiThreadedExecutor exec;
+
+  auto client = std::make_shared<ArpisClientNode>(addr, port, node, node2);
+  exec.add_node(node);
+  exec.add_node(node2);
+  rclcpp::Rate rcl_rate(8ms);
+  while (rclcpp::ok())
+  {
+    rcl_rate.sleep();
+    exec.spin_some();
+  }
+
   rclcpp::shutdown();
   
   return 0;
