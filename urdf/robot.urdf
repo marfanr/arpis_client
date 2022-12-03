@@ -472,7 +472,7 @@
     <axis xyz="0 1 0"/>
     <parent link="left_hand_1"/>
     <child link="left_shoulder_roll"/>
-    <origin rpy="0 0.3 0" xyz="0 .0 -0.15"/>
+    <origin rpy="0 0.35 0" xyz="0 .0 -0.15"/>
     <limit lower="0.0" upper="0" effort="1.0" velocity="1.0"/>
   </joint>
 
@@ -584,7 +584,7 @@
   <!-- right shoulder roll -->
   <link name="right_shoulder_roll">
     <origin xyz="0.4 2.0 0.0"/>
-    <visual>    
+    <visual>    right shoulder rol
       <geometry>
           <box size="0.15 0.3 0.05"/>
       </geometry>              
@@ -598,7 +598,7 @@
     <axis xyz="0 1 0"/>
     <parent link="right_hand_1"/>
     <child link="right_shoulder_roll"/>
-    <origin rpy="0 0.3 0" xyz="0 .0 -0.15"/>
+    <origin rpy="0 -0.35 0" xyz="0 .0 -0.15"/>
     <limit lower="0.0" upper="0" effort="1.0" velocity="1.0"/>
   </joint>
 
