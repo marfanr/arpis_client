@@ -85,14 +85,15 @@ class ArpisClientNode {
     tcp = new arpis_network::tcp(addr, port);
     tcp->connect();
 
-    // auto grp = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    // rclcpp::SubscriptionOptions options;
-    // options.callback_group = grp;
-    tf_broadcast_ = std::make_unique<tf2_ros::TransformBroadcaster>(node2_);
+    auto grp = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    rclcpp::SubscriptionOptions options;
+    // node_->cre
+    options.callback_group = grp;
+    tf_broadcast_ = std::make_unique<tf2_ros::TransformBroadcaster>(node_);
     tcp_receiver_pub = node_->create_publisher<tachimawari_interfaces::msg::Joint>("tcp_receiver", 10);
-    timer_ = node_->create_wall_timer(1ms, std::bind(&ArpisClientNode::exec, this));
-    tcp_receiver_sub = node2_->create_subscription<tachimawari_interfaces::msg::Joint>("tcp_receiver", 10, std::bind(&ArpisClientNode::rviz, this, std::placeholders::_1));
-    joint_broadcast_ = node2_->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+    timer_ = node_->create_wall_timer(1ms, std::bind(&ArpisClientNode::exec, this), grp);
+    tcp_receiver_sub = node_->create_subscription<tachimawari_interfaces::msg::Joint>("tcp_receiver", 10, std::bind(&ArpisClientNode::rviz, this, std::placeholders::_1), options);
+    joint_broadcast_ = node_->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
   }
   private:  
   double val2deg(int val) {
@@ -176,11 +177,12 @@ int main(int argc, char ** argv)
   auto node2 = std::make_shared<rclcpp::Node>("arpis_client_2");
 
   // rclcpp::spin(std::make_shared<ArpisClientNode>(addr, port));
-  rclcpp::executors::MultiThreadedExecutor exec;
+  rclcpp::executors::SingleThreadedExecutor exec;
 
   auto client = std::make_shared<ArpisClientNode>(addr, port, node, node2);
   exec.add_node(node);
-  exec.add_node(node2);
+  // exec.add_node(node2);
+  // exec.spin();
   rclcpp::Rate rcl_rate(8ms);
   while (rclcpp::ok())
   {
