@@ -469,10 +469,10 @@
   </link>  
 
   <joint name="left_shoulder_roll" type="revolute">
-    <axis xyz="0 0 1"/>
+    <axis xyz="0 1 0"/>
     <parent link="left_hand_1"/>
     <child link="left_shoulder_roll"/>
-    <origin rpy="0 0 0" xyz="0 .0 -0.15"/>
+    <origin rpy="0 0.3 0" xyz="0 .0 -0.15"/>
     <limit lower="0.0" upper="0" effort="1.0" velocity="1.0"/>
   </joint>
 
@@ -595,10 +595,10 @@
   </link>  
 
   <joint name="right_shoulder_roll" type="revolute">
-    <axis xyz="0 0 1"/>
+    <axis xyz="0 1 0"/>
     <parent link="right_hand_1"/>
     <child link="right_shoulder_roll"/>
-    <origin rpy="0 0 0" xyz="0 .0 -0.15"/>
+    <origin rpy="0 0.3 0" xyz="0 .0 -0.15"/>
     <limit lower="0.0" upper="0" effort="1.0" velocity="1.0"/>
   </joint>
 
@@ -679,7 +679,7 @@
   </link>  
 
   <joint name="head_pan" type="revolute">
-    <axis xyz="0 1 0"/>
+    <axis xyz="0 0 1"/>
     <parent link="body"/>
     <child link="head_pan"/>
     <origin rpy="0 0 0" xyz="0 .0 .4"/>

@@ -28,12 +28,12 @@ const std::string joint_id[20] = {
   "left_shoulder_roll", // 4
   "right_elbow", // 5
   "left_elbow", // 6
-  "right_hip_yaw", // 7
-  "left_hip_yaw", // 8
-  "right_hip_pitch", // 9
-  "left_hip_pitch", // 10
-  "right_hip_roll", // 11
-  "left_hip_roll", // 12
+  "right_hip_roll", // 7
+  "left_hip_roll", // 8
+  "right_hip_yaw", // 9
+  "left_hip_yaw", // 10
+  "right_hip_pitch", // 11
+  "left_hip_pitch", // 12
   "right_knee", // 13
   "left_knee", // 14
   "right_ankle_roll", // 15
@@ -43,6 +43,29 @@ const std::string joint_id[20] = {
   "head_pan", // 19
   "head_tilt" // 20
   };
+
+float direction[20] = {
+    1, // 1
+    -1, // 2
+    1, // 3
+    -1, // 4
+    -1, // 5
+    1, // 6
+    -1, // 7
+    -1, // 8
+    1, // 9
+    -1, // 10
+    -1, // 1
+    1, // 2
+    -1, // 3
+    1, // 4
+    1, // 5
+    1, // 6
+    1, // 7
+    1, // 8
+    1, // 9
+    1, // 10
+};
 
 struct arpis_transfer_item {
   int id;
@@ -74,7 +97,7 @@ class ArpisClientNode {
   private:  
   double val2deg(int val) {
     // return (val-2048)*180.0/2048 ;
-    return (val-2048)*(M_PI/180.0);
+    return (val-2048)*(360.0/4096.0)*(M_PI/180.0);
   }
   void register_joint(sensor_msgs::msg::JointState &js,std::string name, double pos) {
       js.header.frame_id = "world";     
@@ -118,8 +141,8 @@ class ArpisClientNode {
     for (int i = 0; i < 20; i++) {
       RCLCPP_INFO(rclcpp::get_logger("arpis_client"), "id %i : position %i", (*items).i[i].id, (*items).i[i].position);
       joint.id = (*items).i[i].id;
-      joint.position = (*items).i[i].position;
-      register_joint(js, joint_id[joint.id-1], val2deg(joint.position));
+      joint.position = (*items).i[i].position*direction[joint.id-1];
+      register_joint(js, joint_id[joint.id-1], val2deg(joint.position ));
     }        
       js.header.stamp = node_->get_clock()->now();
       this->tcp_receiver_pub->publish(joint);

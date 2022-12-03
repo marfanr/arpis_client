@@ -27,11 +27,18 @@ find_package(tachimawari REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED  
   "src/${PROJECT_NAME}/joint/joint.cpp"
+  "src/${PROJECT_NAME}/node/node_manager.cpp"
 )
+
+# add_
 
 install(DIRECTORY "include" DESTINATION ".")
 install(DIRECTORY "launch" DESTINATION share/${PROJECT_NAME}/)
 install(DIRECTORY "urdf" DESTINATION share/${PROJECT_NAME}/)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
 
 ament_target_dependencies(${PROJECT_NAME}  
   "rclcpp"
