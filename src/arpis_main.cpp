@@ -76,18 +76,16 @@ struct arpis {
   arpis_transfer_item i[22];
 };
 
-// typedef arpis_item arp[22];
-
 class ArpisClientNode {
   public:
-  ArpisClientNode(const char * addr, int port, rclcpp::Node::SharedPtr node, rclcpp::Node::SharedPtr node2)
-    : node_(node), node2_(node2) {
+  ArpisClientNode(const char * addr, int port, rclcpp::Node::SharedPtr node)
+    : node_(node) {
     tcp = new arpis_network::tcp(addr, port);
     tcp->connect();
 
     auto grp = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     rclcpp::SubscriptionOptions options;
-    // node_->cre
+   
     options.callback_group = grp;
     tf_broadcast_ = std::make_unique<tf2_ros::TransformBroadcaster>(node_);
     tcp_receiver_pub = node_->create_publisher<tachimawari_interfaces::msg::Joint>("tcp_receiver", 10);
@@ -105,8 +103,8 @@ class ArpisClientNode {
       js.name.push_back(name);
       js.position.push_back(pos);
   }
-  // void rviz_coder(const tachimawari_interfaces::msg::Joint::SharedPtr msg) {
-  // }
+ 
+ 
   void rviz(const tachimawari_interfaces::msg::Joint::SharedPtr msg) {
     geometry_msgs::msg::TransformStamped t;
     
@@ -125,17 +123,15 @@ class ArpisClientNode {
     joint_broadcast_->publish(js);
     js.position.clear();
     js.name.clear();
-    // RCLCPP_INFO(rclcpp::get_logger("arpis_client"), " id %i : position %f", msg->id, msg->position);
   }
 
   void exec() {  
     char buffer[1024] = {0};
-    // RCLCPP_INFO(rclcpp::get_logger("test"), "s");
+   
     tcp->receive(buffer, 1024);
-    // if (std::string(buffer).length() != 0)
+   
     char * buff = (char *)buffer;
-    // arp * i = (arp *)(void *)buff;
-    // arp k = (arp k)&i;
+   
     arpis * items = (arpis *)(void *)buff;
         
     tachimawari_interfaces::msg::Joint joint;
@@ -146,7 +142,23 @@ class ArpisClientNode {
       register_joint(js, joint_id[joint.id-1], val2deg(joint.position ));
     }        
       js.header.stamp = node_->get_clock()->now();
-      this->tcp_receiver_pub->publish(joint);
+      // this->tcp_receiver_pub->publish(joint);
+      geometry_msgs::msg::TransformStamped t;
+
+      t.header.set__frame_id("world");
+      t.set__child_frame_id("robot");
+      t.header.stamp = node_->get_clock()->now();
+      t.transform.translation.x = 0.5;
+      t.transform.translation.y = 0;
+      t.transform.translation.z = 0;
+      tf_broadcast_->sendTransform(t);
+
+      // init joint
+      this->register_joint(js, "body_to_robot", (3.14 / 180) * 0);
+
+      joint_broadcast_->publish(js);
+      js.position.clear();
+      js.name.clear();
   }  
   float tinc;
   rclcpp::Publisher<tachimawari_interfaces::msg::Joint>::SharedPtr tcp_receiver_pub;
@@ -156,7 +168,6 @@ class ArpisClientNode {
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_broadcast_;
   arpis_network::tcp * tcp;
   rclcpp::Node::SharedPtr node_;
-  rclcpp::Node::SharedPtr node2_;
   sensor_msgs::msg::JointState js;
 
   double position[19];
@@ -174,15 +185,12 @@ int main(int argc, char ** argv)
       port = (int)atoi(argv[t+1]);
   }
   auto node = std::make_shared<rclcpp::Node>("arpis_client_1");
-  auto node2 = std::make_shared<rclcpp::Node>("arpis_client_2");
 
-  // rclcpp::spin(std::make_shared<ArpisClientNode>(addr, port));
   rclcpp::executors::SingleThreadedExecutor exec;
 
-  auto client = std::make_shared<ArpisClientNode>(addr, port, node, node2);
+  auto client = std::make_shared<ArpisClientNode>(addr, port, node);
   exec.add_node(node);
-  // exec.add_node(node2);
-  // exec.spin();
+  
   rclcpp::Rate rcl_rate(8ms);
   while (rclcpp::ok())
   {

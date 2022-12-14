@@ -27,7 +27,7 @@ find_package(tachimawari REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED  
   "src/${PROJECT_NAME}/joint/joint.cpp"
-  "src/${PROJECT_NAME}/node/node_manager.cpp"
+  "src/${PROJECT_NAME}/node/client_node.cpp"
 )
 
 # add_
